@@ -24,55 +24,55 @@ import { motion, AnimatePresence, useScroll } from "framer-motion";
 // Main container
 const Container = styled.div`
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
   background: ${(props) => props.theme.colors.background};
+  position: relative;
 
-  @media (max-width: 768px) {
-    flex-direction: column;
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: ${(props) =>
+      !props.theme.isDark
+        ? "radial-gradient(circle at 90% 90%, rgba(47, 221, 162, 0.12) 0%, rgba(255, 255, 255, 0) 50%)"
+        : "none"};
+    pointer-events: none;
+    z-index: 0;
   }
 `;
 
 // Mobile menu button (visible on small screens)
 const MenuButton = styled.button`
-  display: none;
-  position: fixed;
-  top: ${({ theme }) => theme.spacing.md};
-  left: ${({ theme }) => theme.spacing.md};
-  z-index: 1000;
-  background: ${({ theme }) => theme.colors.sidebar};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  padding: ${({ theme }) => theme.spacing.sm};
-  color: ${({ theme }) => theme.colors.text};
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
   cursor: pointer;
-  transition: transform ${({ theme }) => theme.transitions.fast};
-
-  &:hover {
-    transform: scale(1.05);
-  }
+  padding: 0.5rem;
+  display: none;
 
   @media (max-width: 768px) {
     display: block;
   }
 `;
 
-const Sidebar = styled.div`
-  width: 280px;
-  backdrop-filter: blur(10px);
-  background-color: rgba(0, 0, 0, 0.4);
-  border-right: 1px solid ${(props) => props.theme.colors.border};
-  overflow-y: auto;
+const Sidebar = styled.aside`
+  width: 300px;
   height: 100vh;
+  overflow-y: auto;
+  background: ${(props) => props.theme.colors.sidebar};
+  border-right: 1px solid ${(props) => props.theme.colors.border};
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
 
   @media (max-width: 768px) {
-    position: fixed;
-    top: 60px;
-    left: 0;
-    width: 100%;
-    height: calc(100vh - 60px);
-    transform: translateX(${(props) => (props.isOpen ? "0" : "-100%")});
+    transform: translateX(${({ isOpen }) => (isOpen ? "0" : "-100%")});
     transition: transform 0.3s ease;
-    z-index: 1000;
   }
 `;
 
@@ -112,20 +112,17 @@ const NavContainer = styled.div`
 `;
 
 // Main content area
-const MainContent = styled(motion.main)`
+const MainContent = styled.main`
   flex: 1;
-  overflow-y: auto;
+  margin-left: 300px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: radial-gradient(
-    circle at bottom right,
-    rgba(74, 222, 128, 0.1),
-    transparent 50%
-  );
+  position: relative;
+  z-index: 1;
 
   @media (max-width: 768px) {
-    min-height: 0;
+    margin-left: 0;
   }
 `;
 
@@ -208,20 +205,34 @@ const NavLink = styled(Link)`
 `;
 
 // Theme toggle button
-const ThemeToggle = styled.button`
+const AuthButtonContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   position: fixed;
-  bottom: ${({ theme }) => theme.spacing.lg};
-  right: ${({ theme }) => theme.spacing.lg};
-  padding: ${({ theme }) => theme.spacing.sm};
-  background: ${({ theme }) => theme.colors.sidebar};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: ${({ theme }) => theme.colors.text};
+  top: 1rem;
+  right: 2rem;
+  z-index: 1002;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const ThemeToggle = styled.button`
+  background: none;
+  border: none;
+  color: ${(props) => props.theme.colors.text};
+  font-size: 1.2rem;
   cursor: pointer;
-  transition: all ${({ theme }) => theme.transitions.fast};
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
 
   &:hover {
-    background: ${({ theme }) => theme.colors.sidebarHover};
+    transform: scale(1.1);
   }
 `;
 
@@ -241,32 +252,39 @@ const Overlay = styled.div`
   }
 `;
 
-const MobileHeader = styled.div`
+const MobileAuthContainer = styled.div`
   display: none;
+  align-items: center;
+  gap: 0.5rem;
 
   @media (max-width: 768px) {
     display: flex;
-    align-items: center;
-    width: 100%;
-    height: 60px;
-    padding: 0 1rem;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background-color: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(10px);
-    z-index: 1001;
   }
 `;
 
-const MobileNav = styled.div`
-  display: flex;
+const MobileThemeToggle = styled(ThemeToggle)`
+  font-size: 1rem;
+  padding: 0.25rem;
+  color: white;
+`;
+
+const MobileHeader = styled.div`
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  padding: 0 0.5rem;
+  background: #0a0a0a;
+  z-index: 1001;
   align-items: center;
-  gap: 1rem;
-  flex: 1;
   justify-content: space-between;
-  max-width: 100%;
+  border-bottom: 1px solid ${(props) => props.theme.colors.border};
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
 `;
 
 const MobileLogo = styled.div`
@@ -279,26 +297,6 @@ const MobileLogo = styled.div`
       height: 24px;
       width: auto;
     }
-  }
-`;
-
-const AuthButtonContainer = styled.div`
-  display: block;
-  position: fixed;
-  top: 1rem;
-  right: 2rem;
-  z-index: 1002;
-
-  @media (max-width: 768px) {
-    display: none;
-  }
-`;
-
-const MobileAuthContainer = styled.div`
-  display: none;
-
-  @media (max-width: 768px) {
-    display: block;
   }
 `;
 
@@ -401,30 +399,29 @@ const SearchResultItem = styled.div`
 `;
 
 const SearchContainer = styled.div`
-  padding: 0 1.5rem 1rem;
-  border-bottom: 1px solid ${(props) => props.theme.colors.border};
   position: relative;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid ${(props) => props.theme.colors.border};
 `;
 
 const SearchInput = styled.input`
   width: 100%;
-  padding: 0.6rem 1.2rem;
-  border-radius: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  background-color: rgba(0, 0, 0, 0.2);
+  padding: 0.5rem 1rem;
+  border: 1px solid ${(props) => props.theme.colors.border};
+  border-radius: ${(props) => props.theme.borderRadius.md};
+  background: ${(props) => props.theme.colors.background};
   color: ${(props) => props.theme.colors.text};
-  font-size: 0.9rem;
+  font-size: ${(props) => props.theme.fontSizes.sm};
   outline: none;
-  transition: all 0.2s ease;
-
-  &::placeholder {
-    color: #9ca3af;
-  }
+  transition: all ${(props) => props.theme.transitions.fast};
 
   &:focus {
-    border-color: rgba(255, 255, 255, 0.2);
-    background-color: rgba(0, 0, 0, 0.3);
+    border-color: ${(props) => props.theme.colors.primary};
+    box-shadow: 0 0 0 2px ${(props) => props.theme.colors.primary}20;
+  }
+
+  &::placeholder {
+    color: ${(props) => props.theme.colors.textLight};
   }
 `;
 
@@ -448,19 +445,23 @@ const Spinner = styled(motion.div)`
 `;
 
 const Footer = styled.footer`
-  padding: 2rem;
+  background: ${(props) => props.theme.colors.sidebar};
   border-top: 1px solid ${(props) => props.theme.colors.border};
-  margin-top: auto;
-  backdrop-filter: blur(10px);
-  background-color: rgba(0, 0, 0, 0.4);
+  padding: 1rem;
+  color: ${(props) => props.theme.colors.text};
+
+  @media (max-width: 768px) {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
 `;
 
 const FooterContent = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
+  max-width: 900px;
   margin: 0 auto;
+  padding: 0 1rem;
 `;
 
 const SocialLinks = styled.div`
@@ -488,6 +489,7 @@ const ContentArea = styled.div`
 
   @media (max-width: 768px) {
     padding: ${(props) => props.theme.spacing.lg};
+    padding-top: 80px; // Account for mobile header
   }
 `;
 
@@ -495,18 +497,21 @@ const ContentArea = styled.div`
 const ScrollIndicator = styled(motion.div)`
   position: fixed;
   top: 0;
+  right: 0;
   bottom: 0;
-  width: 6px;
-  background: linear-gradient(to bottom, #fe3f68, #9b4bcc, #4a6eec, #2fdda2);
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    #fe3f68 -5.06%,
+    #9b4bcc 30.57%,
+    #4a6eec 74.68%,
+    #2fdda2 105.9%
+  );
   transform-origin: top;
-  z-index: 10;
-
-  @media (min-width: 769px) {
-    left: 280px;
-  }
+  z-index: 1002;
 
   @media (max-width: 768px) {
-    right: 0;
+    display: none;
   }
 `;
 
@@ -525,6 +530,7 @@ function Layout() {
   const [showResults, setShowResults] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { scrollYProgress } = useScroll();
+  const { isDark, toggleTheme } = useTheme();
 
   useEffect(() => {
     const loadStructure = async () => {
@@ -663,6 +669,9 @@ function Layout() {
           />
         </MobileLogo>
         <MobileAuthContainer>
+          <MobileThemeToggle onClick={toggleTheme}>
+            {isDark ? "🌞" : "🌙"}
+          </MobileThemeToggle>
           {user ? (
             <AuthButton onClick={handleLogout}>Sign Out</AuthButton>
           ) : (
@@ -677,6 +686,7 @@ function Layout() {
         ) : (
           <AuthButton onClick={handleLogin}>Sign In</AuthButton>
         )}
+        <ThemeToggle onClick={toggleTheme}>{isDark ? "🌞" : "🌙"}</ThemeToggle>
       </AuthButtonContainer>
 
       <Sidebar isOpen={isMobileMenuOpen}>
