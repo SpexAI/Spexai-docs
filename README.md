@@ -5,30 +5,33 @@ This repository contains the documentation website for SpexAI, built with React 
 ## Quick Start
 
 1. Clone the repository:
-   git clone https://github.com/SpexAI/Spexai-docs.git
+  ``` git clone https://github.com/SpexAI/Spexai-docs.git
    cd Spexai-docs
+```
 
 2. Install dependencies:
-   npm install
+   `npm install`
 
-3. Create a .env file in the root directory with your Firebase configuration:
+3. Create a `.env `file in the root directory with your Firebase configuration:
+   ```
    REACT_APP_FIREBASE_API_KEY=your_key
    REACT_APP_FIREBASE_AUTH_DOMAIN=your_domain
    REACT_APP_FIREBASE_PROJECT_ID=your_project_id
    REACT_APP_FIREBASE_STORAGE_BUCKET=your_bucket
    REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
    REACT_APP_FIREBASE_APP_ID=your_app_id
+   ```
 
 4. Start the development server:
-   npm start
+   `npm start`
 
 ## Build
 
 To create a production build:
-npm run build
+`npm run build`
 
 To serve the production build locally:
-npx serve -s build
+`npx serve -s build`
 
 ## Protected Routes
 
