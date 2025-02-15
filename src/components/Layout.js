@@ -290,9 +290,15 @@ const AuthButtonContainer = styled.div`
   z-index: 1002;
 
   @media (max-width: 768px) {
-    position: static;
-    display: flex;
-    justify-content: flex-end;
+    display: none;
+  }
+`;
+
+const MobileAuthContainer = styled.div`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: block;
   }
 `;
 
@@ -652,11 +658,13 @@ function Layout() {
             alt="SpexAI"
           />
         </MobileLogo>
-        {user ? (
-          <AuthButton onClick={handleLogout}>Sign Out</AuthButton>
-        ) : (
-          <AuthButton onClick={handleLogin}>Sign In</AuthButton>
-        )}
+        <MobileAuthContainer>
+          {user ? (
+            <AuthButton onClick={handleLogout}>Sign Out</AuthButton>
+          ) : (
+            <AuthButton onClick={handleLogin}>Sign In</AuthButton>
+          )}
+        </MobileAuthContainer>
       </MobileHeader>
 
       <AuthButtonContainer>
