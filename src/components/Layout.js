@@ -641,7 +641,11 @@ function Layout() {
     setShowResults(false);
   };
 
-  const handleNavClick = () => {
+  const handleNavClick = (e) => {
+    if (e.target.closest(".search-container")) {
+      e.stopPropagation();
+      return;
+    }
     setIsMobileMenuOpen(false);
   };
 
