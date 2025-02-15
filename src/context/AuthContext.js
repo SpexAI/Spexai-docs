@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth } from "../config/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
 
@@ -16,6 +17,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -27,10 +29,25 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
+  const handleLogin = () => {
+    navigate("/login");
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate("/");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
   const value = {
     user,
     loading,
     isAdmin,
+    handleLogin,
+    handleLogout,
   };
 
   return (

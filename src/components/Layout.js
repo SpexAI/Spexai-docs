@@ -283,8 +283,16 @@ const MobileLogo = styled.div`
 `;
 
 const AuthButtonContainer = styled.div`
+  display: block;
+  position: fixed;
+  top: 1rem;
+  right: 2rem;
+  z-index: 1002;
+
   @media (max-width: 768px) {
-    margin-left: 1rem;
+    position: static;
+    display: flex;
+    justify-content: flex-end;
   }
 `;
 
@@ -500,7 +508,7 @@ function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname.split("/")[2] || "";
-  const { user, handleLogout, handleLogin } = useAuth();
+  const { user, handleLogin, handleLogout } = useAuth();
   const [docStructure, setDocStructure] = useState({
     public: [],
     protected: [],
@@ -644,14 +652,20 @@ function Layout() {
             alt="SpexAI"
           />
         </MobileLogo>
-        <AuthButtonContainer>
-          {user ? (
-            <AuthButton onClick={handleLogout}>Sign Out</AuthButton>
-          ) : (
-            <AuthButton onClick={handleLogin}>Sign In</AuthButton>
-          )}
-        </AuthButtonContainer>
+        {user ? (
+          <AuthButton onClick={handleLogout}>Sign Out</AuthButton>
+        ) : (
+          <AuthButton onClick={handleLogin}>Sign In</AuthButton>
+        )}
       </MobileHeader>
+
+      <AuthButtonContainer>
+        {user ? (
+          <AuthButton onClick={handleLogout}>Sign Out</AuthButton>
+        ) : (
+          <AuthButton onClick={handleLogin}>Sign In</AuthButton>
+        )}
+      </AuthButtonContainer>
 
       <Sidebar isOpen={isMobileMenuOpen}>
         <SidebarContent onClick={handleNavClick}>

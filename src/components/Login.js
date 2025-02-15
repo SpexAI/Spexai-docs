@@ -74,7 +74,7 @@ function Login() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/protected/docs/getting-started");
+      navigate("/");
     } catch (error) {
       switch (error.code) {
         case "auth/invalid-email":
