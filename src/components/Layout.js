@@ -91,7 +91,8 @@ const Sidebar = styled.aside`
   width: 300px;
   height: 100vh;
   overflow-y: auto;
-  background: ${(props) => props.theme.colors.sidebar};
+  backdrop-filter: blur(10px);
+  background-color: rgba(0, 0, 0, 0.4);
   border-right: 1px solid ${(props) => props.theme.colors.border};
   position: fixed;
   left: 0;

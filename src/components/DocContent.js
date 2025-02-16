@@ -17,6 +17,7 @@ import {
   where,
   getDocs,
 } from "firebase/firestore";
+import { Helmet } from "react-helmet-async";
 
 mermaid.initialize({
   startOnLoad: true,
@@ -289,13 +290,42 @@ const DocContent = () => {
   if (!document) return null;
 
   return (
-    <DocWrapper>
-      <h1>{document.title}</h1>
-      {formattedDate && <div>Last updated: {formattedDate}</div>}
-      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-        {document.content}
-      </ReactMarkdown>
-    </DocWrapper>
+    <>
+      <Helmet>
+        <title>
+          {document?.title
+            ? `${document.title} | SpexAI Docs`
+            : "SpexAI Documentation"}
+        </title>
+        <meta
+          name="description"
+          content={document?.description || "SpexAI Documentation"}
+        />
+        <meta
+          property="og:title"
+          content={document?.title || "SpexAI Documentation"}
+        />
+        <meta
+          property="og:description"
+          content={document?.description || "SpexAI Documentation"}
+        />
+        <meta
+          name="twitter:title"
+          content={document?.title || "SpexAI Documentation"}
+        />
+        <meta
+          name="twitter:description"
+          content={document?.description || "SpexAI Documentation"}
+        />
+      </Helmet>
+      <DocWrapper>
+        <h1>{document.title}</h1>
+        {formattedDate && <div>Last updated: {formattedDate}</div>}
+        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+          {document.content}
+        </ReactMarkdown>
+      </DocWrapper>
+    </>
   );
 };
 
