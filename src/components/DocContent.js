@@ -293,6 +293,37 @@ const DocContent = () => {
     return getFirstImage(document.content) || defaultImage;
   }, [document?.content]);
 
+  // Custom renderer for markdown elements
+  const components = {
+    img: ({ node, ...props }) => {
+      // Check both URL and alt text for video extensions
+      const isVideo =
+        props.src?.match(/\.(mp4|webm|ogg|mov)/i) ||
+        props.alt?.match(/\.(mp4|webm|ogg|mov)$/i);
+
+      if (isVideo) {
+        console.log("Rendering video:", props.src); // Debug log
+        return (
+          <video
+            controls
+            style={{
+              maxWidth: "100%",
+              borderRadius: "8px",
+              margin: "1.5rem 0",
+            }}
+            playsInline
+          >
+            <source src={props.src} />
+            Your browser does not support the video tag.
+          </video>
+        );
+      }
+
+      // Regular image rendering
+      return <img {...props} style={{ maxWidth: "100%" }} />;
+    },
+  };
+
   if (loading) {
     return (
       <LoadingWrapper>
@@ -323,7 +354,11 @@ const DocContent = () => {
       <DocWrapper>
         <h1>{document.title}</h1>
         {formattedDate && <div>Last updated: {formattedDate}</div>}
-        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+          components={components}
+        >
           {document.content}
         </ReactMarkdown>
       </DocWrapper>
