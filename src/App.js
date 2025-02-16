@@ -11,10 +11,12 @@ import AdminRoute from "./components/AdminRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { HelmetProvider } from "react-helmet-async";
 
+const helmetContext = {};
+
 function App() {
   return (
     <Router>
-      <HelmetProvider>
+      <HelmetProvider context={helmetContext}>
         <ThemeProvider>
           <GlobalStyle />
           <AuthProvider>
