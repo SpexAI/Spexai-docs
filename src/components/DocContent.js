@@ -276,6 +276,23 @@ const DocContent = () => {
     }
   }, [document?.updatedAt]);
 
+  // Extract first image from markdown content
+  const getFirstImage = (content) => {
+    if (!content) return null;
+    const imageMatch = content.match(/!\[.*?\]\((.*?)\)/);
+    return imageMatch ? imageMatch[1] : null;
+  };
+
+  // Default meta image
+  const defaultImage =
+    "https://spexai.com/wp-content/uploads/2024/07/cropped-347a82fd-a5bf-4ba5-b47e-ffd74a83f596-192x192.jpeg";
+
+  // Get document image or default
+  const documentImage = useMemo(() => {
+    if (!document?.content) return defaultImage;
+    return getFirstImage(document.content) || defaultImage;
+  }, [document?.content]);
+
   if (loading) {
     return (
       <LoadingWrapper>
@@ -301,6 +318,8 @@ const DocContent = () => {
           name="description"
           content={document?.description || "SpexAI Documentation"}
         />
+
+        {/* OpenGraph Meta Tags */}
         <meta
           property="og:title"
           content={document?.title || "SpexAI Documentation"}
@@ -309,6 +328,12 @@ const DocContent = () => {
           property="og:description"
           content={document?.description || "SpexAI Documentation"}
         />
+        <meta property="og:image" content={documentImage} />
+        <meta property="og:url" content={window.location.href} />
+        <meta property="og:type" content="article" />
+
+        {/* Twitter Card Meta Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
         <meta
           name="twitter:title"
           content={document?.title || "SpexAI Documentation"}
@@ -317,6 +342,12 @@ const DocContent = () => {
           name="twitter:description"
           content={document?.description || "SpexAI Documentation"}
         />
+        <meta name="twitter:image" content={documentImage} />
+
+        {/* Additional Meta Tags */}
+        <meta name="author" content="SpexAI" />
+        <meta name="date" content={document?.updatedAt || ""} />
+        <link rel="canonical" href={window.location.href} />
       </Helmet>
       <DocWrapper>
         <h1>{document.title}</h1>
