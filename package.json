@@ -3,17 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@mdx-js/react": "^3.1.0",
     "@uiw/react-md-editor": "^4.0.5",
     "cra-template": "1.2.0",
     "firebase": "^11.3.1",
     "framer-motion": "^12.4.3",
+    "mermaid": "^11.4.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-firebase-hooks": "^5.1.1",
     "react-markdown": "^9.0.3",
     "react-router-dom": "^6.22.1",
     "react-scripts": "5.0.1",
+    "remark-directive": "^3.0.1",
+    "remark-gfm": "^4.0.1",
     "styled-components": "^6.1.15",
+    "unist-util-visit": "^5.0.0",
     "uuid": "^11.0.5"
   },
   "scripts": {

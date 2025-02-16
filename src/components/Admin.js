@@ -307,6 +307,40 @@ const BackButton = styled(AdminButton)`
   margin-bottom: 2rem;
 `;
 
+const StyledMDEditor = styled(MDEditor)`
+  .w-md-editor-toolbar {
+    background: ${({ theme }) => theme.colors.background};
+    border-color: ${({ theme }) => theme.colors.border};
+    padding: 8px;
+
+    svg {
+      width: 20px;
+      height: 20px;
+      color: ${({ theme }) => theme.colors.text};
+    }
+
+    li > button {
+      padding: 6px;
+      margin: 0 2px;
+      color: ${({ theme }) => theme.colors.text};
+
+      &:hover {
+        background: ${({ theme }) => theme.colors.sidebarHover};
+        color: ${({ theme }) => theme.colors.accent};
+      }
+
+      &[disabled] {
+        opacity: 0.5;
+      }
+    }
+  }
+
+  .w-md-editor-toolbar-divider {
+    background-color: ${({ theme }) => theme.colors.border};
+    margin: 0 6px;
+  }
+`;
+
 export default function Admin() {
   const [sections, setSections] = useState([]);
   const [currentSection, setCurrentSection] = useState({
@@ -695,7 +729,7 @@ export default function Admin() {
                 <FormGroup>
                   <Label>Content</Label>
                   <EditorContainer>
-                    <MDEditor
+                    <StyledMDEditor
                       value={item.content}
                       onChange={(value) =>
                         handleItemChange(index, "content", value)
@@ -918,7 +952,7 @@ export default function Admin() {
                     <FormGroup>
                       <Label>Content</Label>
                       <EditorContainer>
-                        <MDEditor
+                        <StyledMDEditor
                           value={item.content}
                           onChange={(value) =>
                             handleItemChange(index, "content", value)

@@ -25,22 +25,50 @@ import { motion, AnimatePresence, useScroll } from "framer-motion";
 const Container = styled.div`
   display: flex;
   min-height: 100vh;
-  background: ${(props) => props.theme.colors.background};
+  background: ${({ theme }) => theme.colors.background};
   position: relative;
+  overflow: hidden;
 
   &::before {
     content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: ${(props) =>
-      !props.theme.isDark
-        ? "radial-gradient(circle at 90% 90%, rgba(47, 221, 162, 0.12) 0%, rgba(255, 255, 255, 0) 50%)"
-        : "none"};
+    top: -200px;
+    right: -400px;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(
+      circle at center,
+      rgba(47, 221, 162, 0.15) 0%,
+      rgba(74, 110, 236, 0.12) 45%,
+      rgba(155, 75, 204, 0.1) 70%,
+      rgba(254, 63, 104, 0) 100%
+    );
+    filter: blur(50px);
+    animation: blob 15s ease-in-out infinite;
     pointer-events: none;
     z-index: 0;
+    opacity: ${({ theme }) => (theme.isDark ? 0.3 : 1)};
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: -300px;
+    left: -300px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(
+      circle at center,
+      rgba(74, 110, 236, 0.15) 0%,
+      rgba(47, 221, 162, 0.12) 45%,
+      rgba(254, 63, 104, 0.1) 70%,
+      rgba(155, 75, 204, 0) 100%
+    );
+    filter: blur(30px);
+    animation: blob 20s ease-in-out infinite reverse;
+    pointer-events: none;
+    z-index: 0;
+    opacity: ${({ theme }) => (theme.isDark ? 0.3 : 1)};
   }
 `;
 
@@ -71,7 +99,7 @@ const Sidebar = styled.aside`
   z-index: 100;
 
   @media (max-width: 768px) {
-    transform: translateX(${({ isOpen }) => (isOpen ? "0" : "-100%")});
+    transform: translateX(${({ $isOpen }) => ($isOpen ? "0" : "-100%")});
     transition: transform 0.3s ease;
   }
 `;
@@ -156,24 +184,28 @@ const LogoImage = styled.img`
 
 // Navigation and sidebar elements
 const Section = styled.div`
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 `;
 
 const SectionTitle = styled.div`
-  padding: 1.5rem 1.5rem 0.5rem;
-  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem 1.5rem 0.5rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: ${(props) => props.theme.colors.textMuted};
+  color: ${({ theme }) => theme.colors.textLight};
 `;
 
 const NavList = styled.div`
-  margin: 0 0 1.5rem 1rem;
+  margin: 0.5rem 0 1rem 1rem;
 `;
 
 const NavItem = styled(motion.div)`
-  margin: 1px 0;
+  margin: 0.15rem 0;
+  position: relative;
 `;
 
 const Nav = styled.nav`
@@ -184,24 +216,46 @@ const Nav = styled.nav`
 const NavLink = styled(Link)`
   display: block;
   padding: 0.5rem 1rem;
-  color: ${(props) =>
-    props.active ? props.theme.colors.accent : props.theme.colors.text};
+  color: ${({ theme }) => theme.colors.text};
   text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: ${(props) => (props.active ? "500" : "400")};
-  background: ${(props) =>
-    props.active ? props.theme.colors.activeBackground : "transparent"};
-  border-left: 2px solid
-    ${(props) => (props.active ? props.theme.colors.accent : "transparent")};
+  border-radius: 4px;
   transition: all 0.2s ease;
+  position: relative;
+  font-size: 0.875rem;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: -0.5rem;
+    top: 50%;
+    width: 3px;
+    height: 0;
+    background: ${({ theme }) => theme.colors.accent};
+    transition: height 0.2s ease;
+    transform: translateY(-50%);
+  }
 
   &:hover {
-    color: ${(props) => props.theme.colors.accent};
-    background: ${(props) =>
-      props.active
-        ? props.theme.colors.activeBackground
-        : props.theme.colors.hoverBackground};
+    background: ${({ theme }) => theme.colors.sidebarHover};
+    transform: translateX(2px);
+    color: ${({ theme }) => theme.colors.accent};
   }
+
+  &.active {
+    background: ${({ theme }) => theme.colors.activeLink};
+    color: ${({ theme }) => theme.colors.accent};
+
+    &::before {
+      height: 70%;
+    }
+  }
+
+  ${({ $active }) =>
+    $active &&
+    `
+    background: ${({ theme }) => theme.colors.sidebarHover};
+    color: ${({ theme }) => theme.colors.accent};
+  `}
 `;
 
 // Theme toggle button
@@ -400,28 +454,31 @@ const SearchResultItem = styled.div`
 
 const SearchContainer = styled.div`
   position: relative;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid ${(props) => props.theme.colors.border};
+  padding: 8px;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  display: flex;
+  align-items: center;
 `;
 
 const SearchInput = styled.input`
   width: 100%;
-  padding: 0.5rem 1rem;
-  border: 1px solid ${(props) => props.theme.colors.border};
-  border-radius: ${(props) => props.theme.borderRadius.md};
-  background: ${(props) => props.theme.colors.background};
-  color: ${(props) => props.theme.colors.text};
-  font-size: ${(props) => props.theme.fontSizes.sm};
+  padding: 0.75rem 1rem;
+  height: 42px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  background: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors.text};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
   outline: none;
-  transition: all ${(props) => props.theme.transitions.fast};
+  transition: all ${({ theme }) => theme.transitions.fast};
 
   &:focus {
-    border-color: ${(props) => props.theme.colors.primary};
-    box-shadow: 0 0 0 2px ${(props) => props.theme.colors.primary}20;
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary}20;
   }
 
   &::placeholder {
-    color: ${(props) => props.theme.colors.textLight};
+    color: ${({ theme }) => theme.colors.textLight};
   }
 `;
 
@@ -689,7 +746,7 @@ function Layout() {
         <ThemeToggle onClick={toggleTheme}>{isDark ? "🌞" : "🌙"}</ThemeToggle>
       </AuthButtonContainer>
 
-      <Sidebar isOpen={isMobileMenuOpen}>
+      <Sidebar $isOpen={isMobileMenuOpen}>
         <SidebarContent onClick={handleNavClick}>
           <SidebarHeader>
             <Logo>
@@ -732,7 +789,7 @@ function Layout() {
                     <NavItem key={item.id}>
                       <NavLink
                         to={`/docs/${item.id}`}
-                        active={currentPath === item.id}
+                        $active={currentPath === item.id}
                       >
                         {item.title}
                       </NavLink>
@@ -756,7 +813,7 @@ function Layout() {
                       <NavItem key={item.id}>
                         <NavLink
                           to={`/protected/docs/${item.id}`}
-                          active={currentPath === item.id}
+                          $active={currentPath === item.id}
                         >
                           {item.title}
                         </NavLink>
