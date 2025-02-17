@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import styled from "styled-components";
-import {
-  Link,
-  useLocation,
-  useNavigate,
-  Outlet,
-  Navigate,
-} from "react-router-dom";
+import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { docsData } from "../data/docs";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -91,8 +85,12 @@ const Sidebar = styled.aside`
   width: 300px;
   height: 100vh;
   overflow-y: auto;
-  backdrop-filter: blur(10px);
-  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: ${({ theme }) =>
+    theme.mode === "light" ? "none" : "blur(10px)"};
+  background-color: ${({ theme }) =>
+    theme.mode === "light"
+      ? "#ffffff" // Explicit white for light mode
+      : "rgba(0, 0, 0, 0.4)"};
   border-right: 1px solid ${(props) => props.theme.colors.border};
   position: fixed;
   left: 0;
@@ -107,19 +105,16 @@ const Sidebar = styled.aside`
 
 // Sidebar inner content
 const SidebarContent = styled.div`
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-
-  @media (max-width: 768px) {
-    height: auto;
-  }
+  padding: 1rem;
+  background: ${({ theme }) =>
+    theme.mode === "light" ? "#ffffff" : theme.colors.sidebar};
 `;
 
 const SidebarHeader = styled.div`
   position: sticky;
   top: 0;
-  background: ${(props) => props.theme.colors.sidebar};
+  background: ${({ theme }) =>
+    theme.mode === "light" ? "#ffffff" : theme.colors.sidebar};
   backdrop-filter: blur(10px);
   z-index: 2;
   border-bottom: 1px solid ${(props) => props.theme.colors.border};
@@ -184,79 +179,37 @@ const LogoImage = styled.img`
 `;
 
 // Navigation and sidebar elements
-const Section = styled.div`
-  margin-bottom: 0.25rem;
+const SectionContainer = styled.div`
+  margin-bottom: 1rem;
 `;
 
-const SectionTitle = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1.25rem 1.5rem 0.5rem;
-  font-size: 0.75rem;
+const SectionHeader = styled.div`
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: ${({ theme }) => theme.colors.textLight};
+  padding: 0.5rem;
+  color: ${(props) => props.theme.colors.text};
 `;
 
-const NavList = styled.div`
-  margin: 0.5rem 0 1rem 1rem;
+const SectionItems = styled.div`
+  padding-left: 1rem;
 `;
 
-const NavItem = styled(motion.div)`
-  margin: 0.15rem 0;
-  position: relative;
+const SectionItem = styled.div`
+  padding: 0.25rem 0;
 `;
 
-const Nav = styled.nav`
-  display: flex;
-  flex-direction: column;
-`;
-
-const NavLink = styled(Link)`
-  display: block;
-  padding: 0.5rem 1rem;
-  color: ${({ theme }) => theme.colors.text};
+const SectionLink = styled(Link)`
+  color: ${(props) => props.theme.colors.text};
   text-decoration: none;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  position: relative;
-  font-size: 0.875rem;
-
-  &::before {
-    content: "";
-    position: absolute;
-    left: -0.5rem;
-    top: 50%;
-    width: 3px;
-    height: 0;
-    background: ${({ theme }) => theme.colors.accent};
-    transition: height 0.2s ease;
-    transform: translateY(-50%);
-  }
+  display: block;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
 
   &:hover {
-    background: ${({ theme }) => theme.colors.sidebarHover};
-    transform: translateX(2px);
-    color: ${({ theme }) => theme.colors.accent};
+    background: ${({ theme }) =>
+      theme.mode === "light"
+        ? theme.colors.sidebarHover
+        : "rgba(255, 255, 255, 0.1)"};
   }
-
-  &.active {
-    background: ${({ theme }) => theme.colors.activeLink};
-    color: ${({ theme }) => theme.colors.accent};
-
-    &::before {
-      height: 70%;
-    }
-  }
-
-  ${({ $active }) =>
-    $active &&
-    `
-    background: ${({ theme }) => theme.colors.sidebarHover};
-    color: ${({ theme }) => theme.colors.accent};
-  `}
 `;
 
 // Theme toggle button
@@ -573,37 +526,27 @@ const ScrollIndicator = styled(motion.div)`
   }
 `;
 
-function Layout() {
+const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const currentPath = location.pathname.split("/")[2] || "";
+  const { isDark, toggleTheme } = useTheme();
   const { user, handleLogin, handleLogout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showResults, setShowResults] = useState(false);
   const [docStructure, setDocStructure] = useState({
     public: [],
     protected: [],
   });
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [showResults, setShowResults] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { scrollYProgress } = useScroll();
-  const { isDark, toggleTheme } = useTheme();
 
   useEffect(() => {
-    const loadStructure = async () => {
-      setLoading(true);
-      try {
-        const structure = await fetchDocStructure();
-        setDocStructure(structure);
-      } catch (error) {
-        console.error("Error loading structure:", error);
-      } finally {
-        setLoading(false);
-      }
+    const loadDocStructure = async () => {
+      const structure = await fetchDocStructure();
+      setDocStructure(structure);
     };
-
-    loadStructure();
+    loadDocStructure();
   }, []);
 
   useEffect(() => {
@@ -620,32 +563,6 @@ function Layout() {
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
-
-  if (location.pathname === "/") {
-    if (
-      docStructure.public.length > 0 &&
-      docStructure.public[0].items.length > 0
-    ) {
-      const firstDoc = docStructure.public[0].items[0];
-      return <Navigate to={`/docs/${firstDoc.id}`} replace />;
-    }
-    if (loading) {
-      return (
-        <SpinnerContainer>
-          <Spinner
-            animate={{
-              rotate: 360,
-            }}
-            transition={{
-              duration: 1,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-          />
-        </SpinnerContainer>
-      );
-    }
-  }
 
   const handleSearch = (e) => {
     const query = e.target.value.toLowerCase();
@@ -783,45 +700,47 @@ function Layout() {
 
           <NavContainer>
             {docStructure.public.map((section) => (
-              <Section key={section.id}>
-                <SectionTitle>{section.title}</SectionTitle>
-                <NavList>
+              <SectionContainer key={section.id}>
+                <SectionHeader>{section.title}</SectionHeader>
+                <SectionItems>
                   {section.items.map((item) => (
-                    <NavItem key={item.id}>
-                      <NavLink
+                    <SectionItem key={item.id}>
+                      <SectionLink
                         to={`/docs/${item.id}`}
-                        $active={currentPath === item.id}
+                        $active={location.pathname === `/docs/${item.id}`}
                       >
                         {item.title}
-                      </NavLink>
-                    </NavItem>
+                      </SectionLink>
+                    </SectionItem>
                   ))}
-                </NavList>
-              </Section>
+                </SectionItems>
+              </SectionContainer>
             ))}
 
             {user &&
               docStructure.protected.map((section) => (
-                <Section key={section.id}>
-                  <SectionTitle>
+                <SectionContainer key={section.id}>
+                  <SectionHeader>
                     {section.title}
                     <span style={{ marginLeft: "8px", fontSize: "12px" }}>
                       🔒
                     </span>
-                  </SectionTitle>
-                  <NavList>
+                  </SectionHeader>
+                  <SectionItems>
                     {section.items.map((item) => (
-                      <NavItem key={item.id}>
-                        <NavLink
+                      <SectionItem key={item.id}>
+                        <SectionLink
                           to={`/protected/docs/${item.id}`}
-                          $active={currentPath === item.id}
+                          $active={
+                            location.pathname === `/protected/docs/${item.id}`
+                          }
                         >
                           {item.title}
-                        </NavLink>
-                      </NavItem>
+                        </SectionLink>
+                      </SectionItem>
                     ))}
-                  </NavList>
-                </Section>
+                  </SectionItems>
+                </SectionContainer>
               ))}
           </NavContainer>
         </SidebarContent>
@@ -868,6 +787,6 @@ function Layout() {
       </MainContent>
     </Container>
   );
-}
+};
 
 export default Layout;

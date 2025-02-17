@@ -1,134 +1,447 @@
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import styled from "styled-components";
 
-const BackgroundWrapper = styled.div`
+const ParticleCanvas = styled.div`
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: -1;
+  z-index: 0;
+  opacity: 0.8;
 `;
 
+const MODEL_URL =
+  "https://spexai-public-assets.s3.us-west-2.amazonaws.com/models/blockchain_buzz_nug.glb";
+
+const SPEXAI_COLORS = {
+  primary: new THREE.Color(0x2fdda2), // Green
+  secondary: new THREE.Color(0x4a6eec), // Blue
+  accent: new THREE.Color(0x9b4bcc), // Purple
+  highlight: new THREE.Color(0xfe3f68), // Red
+};
+
 const ParticleBackground = () => {
-  const containerRef = useRef(null);
-  const mouseX = useRef(0);
-  const mouseY = useRef(0);
+  const containerRef = useRef();
+  const sceneRef = useRef();
+  const cameraRef = useRef();
+  const rendererRef = useRef();
+  const particlesRef = useRef();
+  const originalPositionsRef = useRef();
+  const solidModelRef = useRef();
+  const controlsRef = useRef();
+  const colorRef = useRef(new THREE.Color(SPEXAI_COLORS.primary));
+  const isHoveredRef = useRef(false);
+  const effectPhaseRef = useRef(0);
+  const modelGroupRef = useRef(null);
+  const timeRef = useRef(0);
+  const animationFrameRef = useRef(null);
+  const isMountedRef = useRef(true);
+
+  const explodeEffect = (originalPos, i, time) => {
+    const phase = (Math.sin(time * 0.5) + 1) * 0.5;
+    const randomX = Math.sin(i * 0.5) * 0.4;
+    const randomY = Math.cos(i * 0.5) * 0.4;
+    const randomZ = Math.sin(i * 0.3) * 0.4;
+
+    return {
+      x: originalPos.x + randomX * phase,
+      y: originalPos.y + randomY * phase,
+      z: originalPos.z + randomZ * phase,
+    };
+  };
 
   useEffect(() => {
+    let isMounted = true;
+    const animationFrameRef = { current: null };
+
     // Scene setup
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(
+    sceneRef.current = new THREE.Scene();
+
+    // Camera setup
+    cameraRef.current = new THREE.PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
       0.1,
       1000
     );
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    cameraRef.current.position.z = 50;
 
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    containerRef.current.appendChild(renderer.domElement);
-
-    // Mountain particle setup
-    const particlesGeometry = new THREE.BufferGeometry();
-    const particlesCount = 5000; // Increased particle count
-    const posArray = new Float32Array(particlesCount * 3);
-
-    // Create mountain-like distribution
-    for (let i = 0; i < particlesCount; i++) {
-      const i3 = i * 3;
-
-      // X position - spread across width
-      posArray[i3] = (Math.random() - 0.5) * 8;
-
-      // Y position - create peaks and valleys
-      const baseHeight = Math.sin(posArray[i3] * 0.5) * 1.5; // Basic mountain shape
-      const noise = Math.random() * 0.5; // Add randomness
-      posArray[i3 + 1] = baseHeight + noise;
-
-      // Z position - add depth
-      posArray[i3 + 2] = (Math.random() - 0.5) * 3;
-    }
-
-    particlesGeometry.setAttribute(
-      "position",
-      new THREE.BufferAttribute(posArray, 3)
-    );
-
-    const particlesMaterial = new THREE.PointsMaterial({
-      size: 0.005,
-      color: "#ffffff",
-      transparent: true,
-      opacity: 0.8,
+    // Renderer setup
+    rendererRef.current = new THREE.WebGLRenderer({
+      alpha: true,
+      antialias: true,
     });
+    rendererRef.current.setSize(window.innerWidth, window.innerHeight);
+    rendererRef.current.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(rendererRef.current.domElement);
 
-    const particlesMesh = new THREE.Points(
-      particlesGeometry,
-      particlesMaterial
+    // Controls setup
+    controlsRef.current = new OrbitControls(
+      cameraRef.current,
+      containerRef.current
     );
-    scene.add(particlesMesh);
+    controlsRef.current.enableDamping = true;
+    controlsRef.current.dampingFactor = 0.05;
+    controlsRef.current.screenSpacePanning = false;
+    controlsRef.current.minDistance = 20;
+    controlsRef.current.maxDistance = 300;
+    controlsRef.current.enablePan = false;
 
-    // Position camera to view mountains
-    camera.position.z = 2;
-    camera.position.y = 0.5;
-    camera.rotation.x = -0.2;
-
-    // Mouse movement handler
-    const handleMouseMove = (event) => {
-      mouseX.current = event.clientX / window.innerWidth - 0.5;
-      mouseY.current = event.clientY / window.innerHeight - 0.5;
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-
-    // Animation
-    const animate = () => {
-      requestAnimationFrame(animate);
-
-      // Gentle rotation
-      particlesMesh.rotation.y += 0.0005;
-
-      // Subtle wave motion
-      const positions = particlesGeometry.attributes.position.array;
-      const time = Date.now() * 0.0001;
-
-      for (let i = 0; i < positions.length; i += 3) {
-        positions[i + 1] += Math.sin(time + positions[i] * 0.5) * 0.001;
+    // Clear everything from the scene first
+    const clearScene = () => {
+      while (sceneRef.current?.children.length > 0) {
+        const obj = sceneRef.current.children[0];
+        sceneRef.current.remove(obj);
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach((material) => material.dispose());
+          } else {
+            obj.material.dispose();
+          }
+        }
       }
-      particlesGeometry.attributes.position.needsUpdate = true;
-
-      // Mouse interaction
-      camera.position.x += (mouseX.current * 0.5 - camera.position.x) * 0.05;
-      camera.position.y +=
-        (-mouseY.current * 0.5 - camera.position.y + 0.5) * 0.05;
-
-      renderer.render(scene, camera);
     };
 
+    clearScene();
+
+    // Add lights ONCE
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(1, 1, 1);
+    const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    backLight.position.set(-1, 1, -1);
+
+    sceneRef.current.add(ambientLight);
+    sceneRef.current.add(directionalLight);
+    sceneRef.current.add(backLight);
+
+    // Single model group reference
+    let modelGroup = null;
+
+    const loadModel = () => {
+      if (!isMounted) return;
+
+      // Clear any existing model
+      if (modelGroup) {
+        sceneRef.current.remove(modelGroup);
+        modelGroup = null;
+      }
+
+      const loader = new GLTFLoader();
+
+      loader.load(
+        MODEL_URL,
+        (gltf) => {
+          if (!isMounted) return;
+
+          console.log("Loading new model");
+          modelGroup = new THREE.Group();
+
+          // Create single solid model
+          solidModelRef.current = gltf.scene.clone();
+          solidModelRef.current.traverse((child) => {
+            if (child.isMesh) {
+              // Use original materials but make them slightly transparent
+              const originalMaterial = child.material.clone();
+              originalMaterial.transparent = true;
+              originalMaterial.opacity = 0.6;
+              originalMaterial.side = THREE.DoubleSide;
+              originalMaterial.depthWrite = true;
+              child.material = originalMaterial;
+              child.userData.hoverable = true;
+            }
+          });
+
+          // Create single particle system
+          const particles = new THREE.BufferGeometry();
+          const particlePositions = [];
+          originalPositionsRef.current = [];
+
+          // Only traverse the original gltf.scene once
+          gltf.scene.traverse((child) => {
+            if (child.isMesh) {
+              const geometry = child.geometry;
+              const positionAttribute = geometry.attributes.position;
+              const samplingRate = 4;
+
+              child.updateWorldMatrix(true, false);
+              const worldMatrix = child.matrixWorld;
+
+              for (let i = 0; i < positionAttribute.count; i += samplingRate) {
+                const vertex = new THREE.Vector3();
+                vertex.fromBufferAttribute(positionAttribute, i);
+                vertex.applyMatrix4(worldMatrix);
+                particlePositions.push(vertex.x, vertex.y, vertex.z);
+                originalPositionsRef.current.push(vertex.clone());
+              }
+            }
+          });
+
+          particles.setAttribute(
+            "position",
+            new THREE.Float32BufferAttribute(particlePositions, 3)
+          );
+
+          const material = new THREE.PointsMaterial({
+            size: 0.1,
+            color: 0x2fdda2,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            sizeAttenuation: true,
+          });
+
+          particlesRef.current = new THREE.Points(particles, material);
+
+          // Add both versions to group ONCE
+          modelGroup.add(solidModelRef.current);
+          modelGroup.add(particlesRef.current);
+
+          // Scale and position
+          modelGroup.scale.set(15, 15, 15);
+
+          const box = new THREE.Box3().setFromObject(modelGroup);
+          const center = box.getCenter(new THREE.Vector3());
+          modelGroup.position.sub(center);
+
+          // Position calculations
+          const fov = cameraRef.current.fov * (Math.PI / 180);
+          const screenWidth = window.innerWidth;
+          const distanceToCamera = cameraRef.current.position.z;
+
+          const rightOffset =
+            Math.tan(fov / 2) *
+            distanceToCamera *
+            ((screenWidth - 200) / (screenWidth / 2) - 1);
+
+          modelGroup.position.x = rightOffset;
+
+          // Add group to scene ONCE
+          sceneRef.current.add(modelGroup);
+
+          console.log(
+            "Scene children count:",
+            sceneRef.current.children.length
+          );
+          console.log("Model group children:", modelGroup.children.length);
+
+          // Camera and controls update
+          const sceneBox = new THREE.Box3().setFromObject(sceneRef.current);
+          const sceneCenter = sceneBox.getCenter(new THREE.Vector3());
+          controlsRef.current.target.copy(sceneCenter);
+
+          const boxSize = box.getSize(new THREE.Vector3());
+          const maxDim = Math.max(boxSize.x, boxSize.y, boxSize.z);
+          const cameraDistance = Math.abs(maxDim / Math.sin(fov / 2));
+
+          cameraRef.current.position.x = rightOffset;
+          cameraRef.current.position.z = cameraDistance * 0.5;
+          controlsRef.current.update();
+        },
+        undefined,
+        (error) => {
+          if (!isMounted) return;
+          console.error("Model loading error:", error);
+        }
+      );
+    };
+
+    // Raycaster setup
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    const onMouseMove = (event) => {
+      // Update mouse position
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      if (cameraRef.current && sceneRef.current) {
+        raycaster.setFromCamera(mouse, cameraRef.current);
+
+        // Check intersection with solid model
+        const intersects = raycaster.intersectObject(
+          solidModelRef.current,
+          true
+        );
+
+        const wasHovered = isHoveredRef.current;
+        isHoveredRef.current = intersects.length > 0;
+
+        // Reset animation time when hover starts
+        if (!wasHovered && isHoveredRef.current) {
+          timeRef.current = Date.now() * 0.001; // Reset time when hover starts
+        }
+      }
+    };
+
+    const animate = () => {
+      if (!isMounted) return;
+
+      const animationId = requestAnimationFrame(animate);
+
+      if (particlesRef.current && originalPositionsRef.current) {
+        const currentTime = Date.now() * 0.001;
+        const time = isHoveredRef.current ? currentTime - timeRef.current : 0;
+
+        const positions =
+          particlesRef.current.geometry.attributes.position.array;
+
+        // Smooth transition of effect phase
+        if (isHoveredRef.current) {
+          effectPhaseRef.current += (1 - effectPhaseRef.current) * 0.1;
+        } else {
+          effectPhaseRef.current += (0 - effectPhaseRef.current) * 0.1;
+        }
+
+        // Color and position animations
+        if (effectPhaseRef.current > 0.01) {
+          // Color animation
+          const colorPhase = (Math.sin(time * 0.3) + 1) * 0.5;
+          const currentColor = colorRef.current;
+
+          if (colorPhase < 0.25) {
+            currentColor.lerpColors(
+              SPEXAI_COLORS.primary,
+              SPEXAI_COLORS.secondary,
+              colorPhase * 4
+            );
+          } else if (colorPhase < 0.5) {
+            currentColor.lerpColors(
+              SPEXAI_COLORS.secondary,
+              SPEXAI_COLORS.accent,
+              (colorPhase - 0.25) * 4
+            );
+          } else if (colorPhase < 0.75) {
+            currentColor.lerpColors(
+              SPEXAI_COLORS.accent,
+              SPEXAI_COLORS.highlight,
+              (colorPhase - 0.5) * 4
+            );
+          } else {
+            currentColor.lerpColors(
+              SPEXAI_COLORS.highlight,
+              SPEXAI_COLORS.primary,
+              (colorPhase - 0.75) * 4
+            );
+          }
+
+          particlesRef.current.material.color = currentColor;
+        }
+
+        // Position animation
+        for (let i = 0; i < positions.length; i += 3) {
+          const originalPos = originalPositionsRef.current[i / 3];
+
+          if (effectPhaseRef.current < 0.01) {
+            positions[i] = originalPos.x;
+            positions[i + 1] = originalPos.y;
+            positions[i + 2] = originalPos.z;
+          } else {
+            const effect = explodeEffect(originalPos, i, time);
+            positions[i] =
+              originalPos.x +
+              (effect.x - originalPos.x) * effectPhaseRef.current;
+            positions[i + 1] =
+              originalPos.y +
+              (effect.y - originalPos.y) * effectPhaseRef.current;
+            positions[i + 2] =
+              originalPos.z +
+              (effect.z - originalPos.z) * effectPhaseRef.current;
+          }
+        }
+
+        particlesRef.current.geometry.attributes.position.needsUpdate = true;
+      }
+
+      if (
+        controlsRef.current &&
+        rendererRef.current &&
+        sceneRef.current &&
+        cameraRef.current
+      ) {
+        controlsRef.current.update();
+        rendererRef.current.render(sceneRef.current, cameraRef.current);
+      }
+
+      // Store animation ID for cleanup
+      animationFrameRef.current = animationId;
+    };
+
+    // Add event listeners
+    containerRef.current.addEventListener("mousemove", onMouseMove);
+
+    loadModel();
     animate();
 
-    // Resize handler
+    // Handle window resize
     const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      cameraRef.current.aspect = width / height;
+      cameraRef.current.updateProjectionMatrix();
+
+      rendererRef.current.setSize(width, height);
+
+      // Recalculate position if model is loaded
+      if (sceneRef.current.children.length > 0) {
+        const fov = cameraRef.current.fov * (Math.PI / 180);
+        const distanceToCamera = cameraRef.current.position.z;
+        const rightOffset =
+          Math.tan(fov / 2) *
+          distanceToCamera *
+          ((width - 200) / (width / 2) - 1);
+
+        // Update model and camera position
+        sceneRef.current.children[1].position.x = rightOffset;
+        cameraRef.current.position.x = rightOffset;
+        controlsRef.current.target.x = rightOffset;
+        controlsRef.current.update();
+      }
     };
 
     window.addEventListener("resize", handleResize);
 
-    // Cleanup
+    // Cleanup function
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("resize", handleResize);
-      containerRef.current?.removeChild(renderer.domElement);
-      particlesGeometry.dispose();
-      particlesMaterial.dispose();
-      renderer.dispose();
+      console.log("Cleaning up");
+      isMounted = false;
+
+      clearScene();
+
+      if (rendererRef.current) {
+        rendererRef.current.dispose();
+        rendererRef.current.forceContextLoss();
+        rendererRef.current.domElement.remove();
+      }
+
+      if (controlsRef.current) {
+        controlsRef.current.dispose();
+      }
+
+      // Clear all refs
+      sceneRef.current = null;
+      cameraRef.current = null;
+      rendererRef.current = null;
+      particlesRef.current = null;
+      solidModelRef.current = null;
+      controlsRef.current = null;
+      originalPositionsRef.current = null;
+      modelGroup = null;
+
+      // Cancel any pending animation frames
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
     };
   }, []);
 
-  return <BackgroundWrapper ref={containerRef} />;
+  return <ParticleCanvas ref={containerRef} />;
 };
 
 export default ParticleBackground;

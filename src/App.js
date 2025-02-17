@@ -10,6 +10,7 @@ import Admin from "./components/Admin";
 import AdminRoute from "./components/AdminRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { HelmetProvider } from "react-helmet-async";
+import Welcome from "./components/Welcome";
 
 const helmetContext = {};
 
@@ -31,6 +32,7 @@ function App() {
                 }
               />
               <Route path="/*" element={<Layout />}>
+                <Route index element={<Welcome />} />
                 <Route path="docs/:docId" element={<DocContent />} />
                 <Route
                   path="protected/docs/:docId"

@@ -195,7 +195,7 @@ export const GlobalStyle = createGlobalStyle`
     transition: color ${({ theme }) => theme.transitions.fast};
 
     &:hover {
-      color: ${({ theme }) => theme.colors.primaryHover};
+      color: #2fdda2;
     }
   }
 
