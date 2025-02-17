@@ -191,6 +191,7 @@ const ParticleBackground = () => {
             size: 0.1,
             color: 0x2fdda2,
             transparent: true,
+            opacity: 1,
             blending: THREE.AdditiveBlending,
             sizeAttenuation: true,
           });
@@ -260,6 +261,14 @@ const ParticleBackground = () => {
         const positions =
           particlesRef.current.geometry.attributes.position.array;
         const time = Date.now() * 0.001;
+
+        // Calculate phase for position and opacity
+        const phase = (Math.sin(time * 0.5) + 1) * 0.5;
+
+        // Fade out particles when they're close to original position
+        // Phase close to 0 means particles are near original position
+        const opacity = phase < 0.1 ? phase * 10 : 1;
+        particlesRef.current.material.opacity = opacity;
 
         // Color animation
         const colorPhase = (Math.sin(time * 0.3) + 1) * 0.5;
