@@ -122,20 +122,60 @@ const SidebarHeader = styled.div`
   border-bottom: 1px solid ${(props) => props.theme.colors.border};
 `;
 
-const NavContainer = styled.div`
-  flex: 1;
-  overflow-y: auto;
-  padding: 1rem 0;
-
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  &::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Hide scrollbar for IE, Edge and Firefox */
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+const LoaderContainer = styled.div`
+  padding: 1.5rem;
+  min-height: 100vh;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 4rem;
+  position: relative;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 `;
+
+const NavItemLoader = styled(motion.div)`
+  height: 28px;
+  background: linear-gradient(
+    97.38deg,
+    #fe3f68 -5.06%,
+    #9b4bcc 30.57%,
+    #4a6eec 74.68%,
+    #2fdda2 105.9%
+  );
+  border-radius: 4px;
+  opacity: 0.15;
+`;
+
+// Update the NavContainer with more items
+const NavContainer = ({ isLoading, children }) => {
+  if (isLoading) {
+    return (
+      <LoaderContainer>
+        {[...Array(20)].map((_, i) => (
+          <NavItemLoader
+            key={i}
+            initial={{ width: "40%", opacity: 0.15 }}
+            animate={{
+              width: ["40%", "80%", "40%"],
+              opacity: [0.15, 0.3, 0.15],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: i * 0.1,
+            }}
+          />
+        ))}
+      </LoaderContainer>
+    );
+  }
+  return children;
+};
 
 // Main content area
 const MainContent = styled.main`
@@ -167,15 +207,16 @@ const ContentWrapper = styled.div`
 `;
 
 // Logo area
-const Logo = styled.div`
+const Logo = styled(Link)`
   padding: 1.5rem;
   margin-bottom: 1rem;
   display: flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
 
   @media (max-width: 768px) {
-    display: none; // Hide desktop logo on mobile
+    display: none;
   }
 `;
 
@@ -305,19 +346,10 @@ const MobileHeader = styled.div`
   }
 `;
 
-const MobileLogo = styled.div`
-  display: none;
-
-  @media (max-width: 768px) {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    img {
-      height: 24px;
-      width: auto;
-    }
-  }
+const MobileLogo = styled(Link)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const AuthButton = styled.button`
@@ -552,11 +584,18 @@ const Layout = () => {
     protected: [],
   });
   const { scrollYProgress } = useScroll();
+  const [isNavLoading, setIsNavLoading] = useState(true);
 
   useEffect(() => {
     const loadDocStructure = async () => {
-      const structure = await fetchDocStructure();
-      setDocStructure(structure);
+      try {
+        const structure = await fetchDocStructure();
+        setDocStructure(structure);
+        // Artificial delay to ensure animation is visible
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      } finally {
+        setIsNavLoading(false);
+      }
     };
     loadDocStructure();
   }, []);
@@ -649,7 +688,7 @@ const Layout = () => {
         <MenuButton onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
           {isMobileMenuOpen ? "✕" : "☰"}
         </MenuButton>
-        <MobileLogo>
+        <MobileLogo to="/">
           <LogoImage
             src="https://spexai.com/wp-content/uploads/2024/06/logo-white.svg"
             alt="SpexAI"
@@ -679,7 +718,7 @@ const Layout = () => {
       <Sidebar $isOpen={isMobileMenuOpen}>
         <SidebarContent onClick={handleNavClick}>
           <SidebarHeader>
-            <Logo>
+            <Logo to="/">
               <LogoImage
                 src="https://spexai.com/wp-content/uploads/2024/06/logo-white.svg"
                 alt="SpexAI"
@@ -710,7 +749,7 @@ const Layout = () => {
             </SearchContainer>
           </SidebarHeader>
 
-          <NavContainer>
+          <NavContainer isLoading={isNavLoading}>
             {docStructure.public.map((section) => (
               <SectionContainer key={section.id}>
                 <SectionHeader>{section.title}</SectionHeader>
