@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import ParticleBackground from "./ParticleBackground";
+import { Helmet } from "react-helmet-async";
 
 const WelcomeLayout = styled.div`
   position: relative;
@@ -92,19 +93,33 @@ const Subtitle = styled.p`
 
 const Welcome = () => {
   return (
-    <WelcomeLayout>
-      <ContentSection>
-        <StyledTitle>The Docs</StyledTitle>
-        <Subtitle>
-          SpexAI empowers industries with advanced AI-driven visual
-          intelligence, transforming how machines perceive and understand the
-          world.
-        </Subtitle>
-      </ContentSection>
-      <ParticleSection>
-        <ParticleBackground />
-      </ParticleSection>
-    </WelcomeLayout>
+    <>
+      <Helmet>
+        <title>SpexAI Documentation</title>
+        <meta
+          name="description"
+          content="SpexAI empowers industries with advanced AI-driven visual intelligence, transforming how machines perceive and understand the world."
+        />
+        <meta property="og:title" content="SpexAI Documentation" />
+        <meta
+          property="og:description"
+          content="SpexAI empowers industries with advanced AI-driven visual intelligence, transforming how machines perceive and understand the world."
+        />
+      </Helmet>
+      <WelcomeLayout>
+        <ContentSection>
+          <StyledTitle>The Docs</StyledTitle>
+          <Subtitle>
+            SpexAI empowers industries with advanced AI-driven visual
+            intelligence, transforming how machines perceive and understand the
+            world.
+          </Subtitle>
+        </ContentSection>
+        <ParticleSection>
+          <ParticleBackground />
+        </ParticleSection>
+      </WelcomeLayout>
+    </>
   );
 };
 
