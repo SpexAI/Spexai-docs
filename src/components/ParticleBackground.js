@@ -8,7 +8,7 @@ import styled from "styled-components";
 const ParticleCanvas = styled.div`
   position: absolute;
   top: 0;
-  left: 10%;
+  left: 0%;
   width: 100%;
   height: 100%;
   z-index: 1;
@@ -40,6 +40,7 @@ const ParticleBackground = () => {
   const colorRef = useRef(new THREE.Color(SPEXAI_COLORS.primary));
   const animationFrameRef = useRef(null);
   const isMountedRef = useRef(true);
+  const modelGroupRef = useRef(null);
 
   const explodeEffect = (originalPos, i, time) => {
     const phase = (Math.sin(time * 0.5) + 1) * 0.5;
@@ -141,6 +142,7 @@ const ParticleBackground = () => {
 
           console.log("Loading new model");
           modelGroup = new THREE.Group();
+          modelGroupRef.current = modelGroup;
 
           // Create single solid model
           solidModelRef.current = gltf.scene.clone();
@@ -256,6 +258,14 @@ const ParticleBackground = () => {
 
       const animationId = requestAnimationFrame(animate);
       animationFrameRef.current = animationId;
+
+      // Add rotation animation
+      if (modelGroupRef.current) {
+        const time = Date.now() * 0.0001; // Slow rotation speed
+        modelGroupRef.current.rotation.y = time;
+        modelGroupRef.current.rotation.x = Math.sin(time * 0.5) * 0.1;
+        modelGroupRef.current.rotation.z = Math.cos(time * 0.3) * 0.1;
+      }
 
       if (particlesRef.current && originalPositionsRef.current) {
         const positions =
