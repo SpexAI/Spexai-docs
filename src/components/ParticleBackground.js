@@ -6,13 +6,16 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import styled from "styled-components";
 
 const ParticleCanvas = styled.div`
-  position: fixed;
+  position: absolute;
   top: 0;
-  left: 0;
+  left: 10%;
   width: 100%;
   height: 100%;
-  z-index: 0;
-  opacity: 0.8;
+  z-index: 1;
+
+  @media (max-width: 768px) {
+    left: 0;
+  }
 `;
 
 const MODEL_URL =
@@ -35,10 +38,6 @@ const ParticleBackground = () => {
   const solidModelRef = useRef();
   const controlsRef = useRef();
   const colorRef = useRef(new THREE.Color(SPEXAI_COLORS.primary));
-  const isHoveredRef = useRef(false);
-  const effectPhaseRef = useRef(0);
-  const modelGroupRef = useRef(null);
-  const timeRef = useRef(0);
   const animationFrameRef = useRef(null);
   const isMountedRef = useRef(true);
 
@@ -251,108 +250,57 @@ const ParticleBackground = () => {
       );
     };
 
-    // Raycaster setup
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-
-    const onMouseMove = (event) => {
-      // Update mouse position
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-      if (cameraRef.current && sceneRef.current) {
-        raycaster.setFromCamera(mouse, cameraRef.current);
-
-        // Check intersection with solid model
-        const intersects = raycaster.intersectObject(
-          solidModelRef.current,
-          true
-        );
-
-        const wasHovered = isHoveredRef.current;
-        isHoveredRef.current = intersects.length > 0;
-
-        // Reset animation time when hover starts
-        if (!wasHovered && isHoveredRef.current) {
-          timeRef.current = Date.now() * 0.001; // Reset time when hover starts
-        }
-      }
-    };
-
     const animate = () => {
       if (!isMounted) return;
 
       const animationId = requestAnimationFrame(animate);
+      animationFrameRef.current = animationId;
 
       if (particlesRef.current && originalPositionsRef.current) {
-        const currentTime = Date.now() * 0.001;
-        const time = isHoveredRef.current ? currentTime - timeRef.current : 0;
-
         const positions =
           particlesRef.current.geometry.attributes.position.array;
+        const time = Date.now() * 0.001;
 
-        // Smooth transition of effect phase
-        if (isHoveredRef.current) {
-          effectPhaseRef.current += (1 - effectPhaseRef.current) * 0.1;
+        // Color animation
+        const colorPhase = (Math.sin(time * 0.3) + 1) * 0.5;
+        const currentColor = colorRef.current;
+
+        if (colorPhase < 0.25) {
+          currentColor.lerpColors(
+            SPEXAI_COLORS.primary,
+            SPEXAI_COLORS.secondary,
+            colorPhase * 4
+          );
+        } else if (colorPhase < 0.5) {
+          currentColor.lerpColors(
+            SPEXAI_COLORS.secondary,
+            SPEXAI_COLORS.accent,
+            (colorPhase - 0.25) * 4
+          );
+        } else if (colorPhase < 0.75) {
+          currentColor.lerpColors(
+            SPEXAI_COLORS.accent,
+            SPEXAI_COLORS.highlight,
+            (colorPhase - 0.5) * 4
+          );
         } else {
-          effectPhaseRef.current += (0 - effectPhaseRef.current) * 0.1;
+          currentColor.lerpColors(
+            SPEXAI_COLORS.highlight,
+            SPEXAI_COLORS.primary,
+            (colorPhase - 0.75) * 4
+          );
         }
 
-        // Color and position animations
-        if (effectPhaseRef.current > 0.01) {
-          // Color animation
-          const colorPhase = (Math.sin(time * 0.3) + 1) * 0.5;
-          const currentColor = colorRef.current;
-
-          if (colorPhase < 0.25) {
-            currentColor.lerpColors(
-              SPEXAI_COLORS.primary,
-              SPEXAI_COLORS.secondary,
-              colorPhase * 4
-            );
-          } else if (colorPhase < 0.5) {
-            currentColor.lerpColors(
-              SPEXAI_COLORS.secondary,
-              SPEXAI_COLORS.accent,
-              (colorPhase - 0.25) * 4
-            );
-          } else if (colorPhase < 0.75) {
-            currentColor.lerpColors(
-              SPEXAI_COLORS.accent,
-              SPEXAI_COLORS.highlight,
-              (colorPhase - 0.5) * 4
-            );
-          } else {
-            currentColor.lerpColors(
-              SPEXAI_COLORS.highlight,
-              SPEXAI_COLORS.primary,
-              (colorPhase - 0.75) * 4
-            );
-          }
-
-          particlesRef.current.material.color = currentColor;
-        }
+        particlesRef.current.material.color = currentColor;
 
         // Position animation
         for (let i = 0; i < positions.length; i += 3) {
           const originalPos = originalPositionsRef.current[i / 3];
+          const effect = explodeEffect(originalPos, i, time);
 
-          if (effectPhaseRef.current < 0.01) {
-            positions[i] = originalPos.x;
-            positions[i + 1] = originalPos.y;
-            positions[i + 2] = originalPos.z;
-          } else {
-            const effect = explodeEffect(originalPos, i, time);
-            positions[i] =
-              originalPos.x +
-              (effect.x - originalPos.x) * effectPhaseRef.current;
-            positions[i + 1] =
-              originalPos.y +
-              (effect.y - originalPos.y) * effectPhaseRef.current;
-            positions[i + 2] =
-              originalPos.z +
-              (effect.z - originalPos.z) * effectPhaseRef.current;
-          }
+          positions[i] = effect.x;
+          positions[i + 1] = effect.y;
+          positions[i + 2] = effect.z;
         }
 
         particlesRef.current.geometry.attributes.position.needsUpdate = true;
@@ -367,13 +315,7 @@ const ParticleBackground = () => {
         controlsRef.current.update();
         rendererRef.current.render(sceneRef.current, cameraRef.current);
       }
-
-      // Store animation ID for cleanup
-      animationFrameRef.current = animationId;
     };
-
-    // Add event listeners
-    containerRef.current.addEventListener("mousemove", onMouseMove);
 
     loadModel();
     animate();

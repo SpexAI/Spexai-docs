@@ -88,18 +88,20 @@ const Sidebar = styled.aside`
   backdrop-filter: ${({ theme }) =>
     theme.mode === "light" ? "none" : "blur(10px)"};
   background-color: ${({ theme }) =>
-    theme.mode === "light"
-      ? "#ffffff" // Explicit white for light mode
-      : "rgba(0, 0, 0, 0.4)"};
+    theme.mode === "light" ? "#ffffff" : "rgba(0, 0, 0, 0.4)"};
   border-right: 1px solid ${(props) => props.theme.colors.border};
   position: fixed;
   left: 0;
   top: 0;
-  z-index: 100;
+  z-index: 1002;
+  transition: transform 0.3s ease;
 
   @media (max-width: 768px) {
+    top: 60px; // Account for mobile header
     transform: translateX(${({ $isOpen }) => ($isOpen ? "0" : "-100%")});
-    transition: transform 0.3s ease;
+    width: 85%;
+    max-width: 300px;
+    height: calc(100vh - 60px);
   }
 `;
 
@@ -147,6 +149,7 @@ const MainContent = styled.main`
 
   @media (max-width: 768px) {
     margin-left: 0;
+    padding-top: 60px; // Account for mobile header
   }
 `;
 
@@ -167,10 +170,13 @@ const ContentWrapper = styled.div`
 const Logo = styled.div`
   padding: 1.5rem;
   margin-bottom: 1rem;
-  border-bottom: 1px solid ${(props) => props.theme.colors.border};
   display: flex;
   justify-content: center;
   align-items: center;
+
+  @media (max-width: 768px) {
+    display: none; // Hide desktop logo on mobile
+  }
 `;
 
 const LogoImage = styled.img`
@@ -251,12 +257,15 @@ const Overlay = styled.div`
   @media (max-width: 768px) {
     display: ${({ isOpen }) => (isOpen ? "block" : "none")};
     position: fixed;
-    top: 0;
+    top: 60px; // Start below header
     left: 0;
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 90;
+    backdrop-filter: blur(4px);
+    z-index: 1001;
+    opacity: ${(props) => (props.isOpen ? 1 : 0)};
+    transition: opacity 0.3s ease;
   }
 `;
 
@@ -283,8 +292,9 @@ const MobileHeader = styled.div`
   left: 0;
   right: 0;
   height: 60px;
-  padding: 0 0.5rem;
-  background: #0a0a0a;
+  padding: 0 1rem;
+  background: ${(props) => props.theme.colors.background};
+  backdrop-filter: blur(10px);
   z-index: 1001;
   align-items: center;
   justify-content: space-between;
@@ -296,10 +306,12 @@ const MobileHeader = styled.div`
 `;
 
 const MobileLogo = styled.div`
+  display: none;
+
   @media (max-width: 768px) {
-    flex: 1;
     display: flex;
     justify-content: center;
+    align-items: center;
 
     img {
       height: 24px;
