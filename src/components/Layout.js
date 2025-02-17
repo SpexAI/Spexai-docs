@@ -451,11 +451,9 @@ const SearchResultItem = styled.div`
 `;
 
 const SearchContainer = styled.div`
-  position: relative;
-  padding: 8px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  display: flex;
-  align-items: center;
+  margin-top: -10px;
+  padding: 0 1.5rem;
+  margin-bottom: 1rem;
 `;
 
 const SearchInput = styled.input`
