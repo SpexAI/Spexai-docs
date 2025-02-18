@@ -283,8 +283,10 @@ const DocContent = () => {
   // Extract first image from markdown content
   const getFirstImage = (content) => {
     if (!content) return null;
-    const imageMatch = content.match(/!\[.*?\]\((.*?)\)/);
-    return imageMatch ? imageMatch[1] : null;
+    // Look for both markdown and HTML image syntax
+    const markdownMatch = content.match(/!\[.*?\]\((.*?)\)/);
+    const htmlMatch = content.match(/<img.*?src=["'](.*?)["']/);
+    return markdownMatch?.[1] || htmlMatch?.[1] || null;
   };
 
   // Update the default image
@@ -301,6 +303,18 @@ const DocContent = () => {
     }
     return contentImage || defaultImage;
   }, [document?.content, baseUrl]);
+
+  // Get meta description
+  const getMetaDescription = (content) => {
+    if (!content) return "SpexAI Documentation and Guides";
+    // Remove markdown syntax and get first 160 characters
+    const plainText = content
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // Remove links
+      .replace(/[#*`]/g, "") // Remove markdown syntax
+      .replace(/\n/g, " ") // Replace newlines with spaces
+      .trim();
+    return plainText.substring(0, 160) + (plainText.length > 160 ? "..." : "");
+  };
 
   // Custom renderer for markdown elements
   const components = {
@@ -348,68 +362,69 @@ const DocContent = () => {
 
   return (
     <>
-      <Helmet>
-        <title>
-          {document?.title
-            ? `${document.title} - SpexAI Docs`
-            : "SpexAI Documentation"}
-        </title>
+      {document && (
+        <Helmet prioritizeSeoTags={true}>
+          <title>
+            {document.title
+              ? `${document.title} - SpexAI Docs`
+              : "SpexAI Documentation"}
+          </title>
 
-        {/* Essential Meta Tags */}
-        <meta
-          name="description"
-          content={
-            document?.content?.substring(0, 160) ||
-            "SpexAI Documentation and Guides"
-          }
-        />
-        <link rel="canonical" href={currentUrl} />
+          {/* Force override meta tags */}
+          <meta
+            name="description"
+            content={getMetaDescription(document.content)}
+            data-rh="true"
+          />
+          <meta property="og:type" content="article" data-rh="true" />
+          <meta property="og:url" content={currentUrl} data-rh="true" />
+          <meta
+            property="og:site_name"
+            content="SpexAI Documentation"
+            data-rh="true"
+          />
+          <meta
+            property="og:title"
+            content={document.title || "SpexAI Documentation"}
+            data-rh="true"
+          />
+          <meta
+            property="og:description"
+            content={getMetaDescription(document.content)}
+            data-rh="true"
+          />
+          <meta
+            property="og:image"
+            content={getFirstImage(document.content) || defaultImage}
+            data-rh="true"
+          />
+          <meta property="og:image:width" content="768" data-rh="true" />
+          <meta property="og:image:height" content="512" data-rh="true" />
 
-        {/* OpenGraph Tags */}
-        <meta property="og:site_name" content="SpexAI Documentation" />
-        <meta property="og:type" content="article" />
-        <meta property="og:url" content={currentUrl} />
-        <meta
-          property="og:title"
-          content={document?.title || "SpexAI Documentation"}
-        />
-        <meta
-          property="og:description"
-          content={
-            document?.content?.substring(0, 160) ||
-            "SpexAI Documentation and Guides"
-          }
-        />
-        <meta property="og:image" content={documentImage} />
-        <meta property="og:image:secure_url" content={documentImage} />
-        <meta property="og:image:width" content="768" />
-        <meta property="og:image:height" content="512" />
-        <meta
-          property="og:image:alt"
-          content={document?.title || "SpexAI Documentation"}
-        />
-
-        {/* Twitter Card Tags */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:domain" content={baseUrl} />
-        <meta name="twitter:url" content={currentUrl} />
-        <meta
-          name="twitter:title"
-          content={document?.title || "SpexAI Documentation"}
-        />
-        <meta
-          name="twitter:description"
-          content={
-            document?.content?.substring(0, 160) ||
-            "SpexAI Documentation and Guides"
-          }
-        />
-        <meta name="twitter:image" content={documentImage} />
-        <meta
-          name="twitter:image:alt"
-          content={document?.title || "SpexAI Documentation"}
-        />
-      </Helmet>
+          <meta
+            name="twitter:card"
+            content="summary_large_image"
+            data-rh="true"
+          />
+          <meta name="twitter:domain" content={baseUrl} data-rh="true" />
+          <meta name="twitter:url" content={currentUrl} data-rh="true" />
+          <meta
+            name="twitter:title"
+            content={document.title || "SpexAI Documentation"}
+            data-rh="true"
+          />
+          <meta
+            name="twitter:description"
+            content={getMetaDescription(document.content)}
+            data-rh="true"
+          />
+          <meta
+            name="twitter:image"
+            content={getFirstImage(document.content) || defaultImage}
+            data-rh="true"
+          />
+        </Helmet>
+      )}
       <DocWrapper>
         <h1>{document.title}</h1>
         {formattedDate && <div>Last updated: {formattedDate}</div>}
