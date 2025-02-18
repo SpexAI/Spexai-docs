@@ -151,7 +151,7 @@ const ParticleBackground = () => {
               // Use original materials but make them slightly transparent
               const originalMaterial = child.material.clone();
               originalMaterial.transparent = true;
-              originalMaterial.opacity = 0.6;
+              originalMaterial.opacity = 0.9;
               originalMaterial.side = THREE.DoubleSide;
               originalMaterial.depthWrite = true;
               child.material = originalMaterial;
@@ -169,7 +169,7 @@ const ParticleBackground = () => {
             if (child.isMesh) {
               const geometry = child.geometry;
               const positionAttribute = geometry.attributes.position;
-              const samplingRate = 4;
+              const samplingRate = 8;
 
               child.updateWorldMatrix(true, false);
               const worldMatrix = child.matrixWorld;
@@ -205,7 +205,7 @@ const ParticleBackground = () => {
           modelGroup.add(particlesRef.current);
 
           // Scale and position
-          modelGroup.scale.set(15, 15, 15);
+          modelGroup.scale.set(20, 20, 20);
 
           const box = new THREE.Box3().setFromObject(modelGroup);
           const center = box.getCenter(new THREE.Vector3());
