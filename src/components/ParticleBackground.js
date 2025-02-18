@@ -12,6 +12,11 @@ const ParticleCanvas = styled.div`
   width: 100%;
   height: 100%;
   z-index: 1;
+  background: transparent;
+
+  canvas {
+    background: transparent !important;
+  }
 
   @media (max-width: 768px) {
     left: 0;
@@ -75,9 +80,12 @@ const ParticleBackground = () => {
     rendererRef.current = new THREE.WebGLRenderer({
       alpha: true,
       antialias: true,
+      powerPreference: "high-performance",
     });
     rendererRef.current.setSize(window.innerWidth, window.innerHeight);
     rendererRef.current.setClearColor(0x000000, 0);
+    rendererRef.current.domElement.style.background = "transparent";
+    rendererRef.current.domElement.style.position = "absolute";
     containerRef.current.appendChild(rendererRef.current.domElement);
 
     // Controls setup
