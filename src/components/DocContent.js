@@ -208,6 +208,10 @@ const DocContent = () => {
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Get the base URL
+  const baseUrl = window.location.origin;
+  const currentUrl = `${baseUrl}${location.pathname}`;
+
   // Memoize mermaid initialization
   useEffect(() => {
     mermaid.initialize({
@@ -290,8 +294,13 @@ const DocContent = () => {
   // Get document image or default
   const documentImage = useMemo(() => {
     if (!document?.content) return defaultImage;
-    return getFirstImage(document.content) || defaultImage;
-  }, [document?.content]);
+    const contentImage = getFirstImage(document.content);
+    // Ensure image URL is absolute
+    if (contentImage && !contentImage.startsWith("http")) {
+      return `${baseUrl}${contentImage}`;
+    }
+    return contentImage || defaultImage;
+  }, [document?.content, baseUrl]);
 
   // Custom renderer for markdown elements
   const components = {
@@ -345,6 +354,8 @@ const DocContent = () => {
             ? `${document.title} - SpexAI Docs`
             : "SpexAI Documentation"}
         </title>
+
+        {/* Essential Meta Tags */}
         <meta
           name="description"
           content={
@@ -352,8 +363,12 @@ const DocContent = () => {
             "SpexAI Documentation and Guides"
           }
         />
+        <link rel="canonical" href={currentUrl} />
 
-        {/* OpenGraph tags */}
+        {/* OpenGraph Tags */}
+        <meta property="og:site_name" content="SpexAI Documentation" />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={currentUrl} />
         <meta
           property="og:title"
           content={document?.title || "SpexAI Documentation"}
@@ -366,12 +381,18 @@ const DocContent = () => {
           }
         />
         <meta property="og:image" content={documentImage} />
+        <meta property="og:image:secure_url" content={documentImage} />
         <meta property="og:image:width" content="768" />
         <meta property="og:image:height" content="512" />
-        <meta property="og:type" content="article" />
+        <meta
+          property="og:image:alt"
+          content={document?.title || "SpexAI Documentation"}
+        />
 
-        {/* Twitter Card tags */}
+        {/* Twitter Card Tags */}
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:domain" content={baseUrl} />
+        <meta name="twitter:url" content={currentUrl} />
         <meta
           name="twitter:title"
           content={document?.title || "SpexAI Documentation"}
@@ -384,6 +405,10 @@ const DocContent = () => {
           }
         />
         <meta name="twitter:image" content={documentImage} />
+        <meta
+          name="twitter:image:alt"
+          content={document?.title || "SpexAI Documentation"}
+        />
       </Helmet>
       <DocWrapper>
         <h1>{document.title}</h1>
