@@ -283,9 +283,9 @@ const DocContent = () => {
     return imageMatch ? imageMatch[1] : null;
   };
 
-  // Default meta image
+  // Update the default image
   const defaultImage =
-    "https://spexai.com/wp-content/uploads/2024/07/cropped-347a82fd-a5bf-4ba5-b47e-ffd74a83f596-192x192.jpeg";
+    "https://spexai.com/wp-content/uploads/2024/05/spexai-home-image3-768x512.jpg";
 
   // Get document image or default
   const documentImage = useMemo(() => {
@@ -345,11 +345,45 @@ const DocContent = () => {
             ? `${document.title} - SpexAI Docs`
             : "SpexAI Documentation"}
         </title>
-        <meta name="description" content="SpexAI Documentation and Guides" />
+        <meta
+          name="description"
+          content={
+            document?.content?.substring(0, 160) ||
+            "SpexAI Documentation and Guides"
+          }
+        />
+
+        {/* OpenGraph tags */}
         <meta
           property="og:title"
           content={document?.title || "SpexAI Documentation"}
         />
+        <meta
+          property="og:description"
+          content={
+            document?.content?.substring(0, 160) ||
+            "SpexAI Documentation and Guides"
+          }
+        />
+        <meta property="og:image" content={documentImage} />
+        <meta property="og:image:width" content="768" />
+        <meta property="og:image:height" content="512" />
+        <meta property="og:type" content="article" />
+
+        {/* Twitter Card tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content={document?.title || "SpexAI Documentation"}
+        />
+        <meta
+          name="twitter:description"
+          content={
+            document?.content?.substring(0, 160) ||
+            "SpexAI Documentation and Guides"
+          }
+        />
+        <meta name="twitter:image" content={documentImage} />
       </Helmet>
       <DocWrapper>
         <h1>{document.title}</h1>
