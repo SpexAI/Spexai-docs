@@ -244,18 +244,23 @@ const SectionItem = styled.div`
   padding: 0.25rem 0;
 `;
 
-const SectionLink = styled(Link)`
-  color: ${(props) => props.theme.colors.text};
-  text-decoration: none;
+const NavLink = styled(Link)`
   display: block;
-  padding: 0.5rem;
-  border-radius: 0.375rem;
+  padding: 0.5rem 1rem;
+  color: ${({ theme }) => theme.colors.text};
+  text-decoration: none;
+  transition: all 0.2s ease;
+  font-size: ${({ theme }) =>
+    theme.fontSizes.xs}; // Using theme's smallest font size
 
   &:hover {
-    background: ${({ theme }) =>
-      theme.mode === "light"
-        ? theme.colors.sidebarHover
-        : "rgba(255, 255, 255, 0.1)"};
+    background: ${({ theme }) => theme.colors.sidebarHover};
+    color: ${({ theme }) => theme.colors.accent};
+  }
+
+  &.active {
+    background: ${({ theme }) => theme.colors.activeLink};
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
@@ -568,6 +573,14 @@ const ScrollIndicator = styled(motion.div)`
   }
 `;
 
+const SectionTitle = styled.div`
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-weight: ${({ theme }) => theme.fontWeights.medium};
+  color: ${({ theme }) => theme.colors.textLight};
+  padding: 0.5rem 1rem;
+  margin-top: 1rem;
+`;
+
 const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -754,12 +767,12 @@ const Layout = () => {
                 <SectionItems>
                   {section.items.map((item) => (
                     <SectionItem key={item.id}>
-                      <SectionLink
+                      <NavLink
                         to={`/docs/${item.id}`}
                         $active={location.pathname === `/docs/${item.id}`}
                       >
                         {item.title}
-                      </SectionLink>
+                      </NavLink>
                     </SectionItem>
                   ))}
                 </SectionItems>
@@ -778,14 +791,14 @@ const Layout = () => {
                   <SectionItems>
                     {section.items.map((item) => (
                       <SectionItem key={item.id}>
-                        <SectionLink
+                        <NavLink
                           to={`/protected/docs/${item.id}`}
                           $active={
                             location.pathname === `/protected/docs/${item.id}`
                           }
                         >
                           {item.title}
-                        </SectionLink>
+                        </NavLink>
                       </SectionItem>
                     ))}
                   </SectionItems>
