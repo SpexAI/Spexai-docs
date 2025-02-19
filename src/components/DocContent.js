@@ -51,6 +51,17 @@ const DocWrapper = styled.div`
   color: ${({ theme }) => theme.colors.text};
   z-index: 1;
 
+  p img,
+  p video {
+    max-width: calc(100% - 100px) !important;
+    width: auto !important;
+    height: auto !important;
+    display: block !important;
+    margin: 2rem auto !important;
+    border-radius: 16px !important;
+    border: 1px solid ${({ theme }) => theme.colors.border} !important;
+  }
+
   h1 {
     font-size: ${({ theme }) => theme.fontSizes["4xl"]};
     margin-bottom: 1rem;
@@ -121,10 +132,11 @@ const DocWrapper = styled.div`
   }
 
   img {
-    max-width: 100%;
+    max-width: calc(100% - 100px);
+    display: block;
+    margin: 2rem auto;
     border-radius: ${({ theme }) => theme.borderRadius.md};
     border: 1px solid ${({ theme }) => theme.colors.border};
-    margin: 1.5rem 0;
   }
 
   table {
