@@ -59,7 +59,6 @@ const DocWrapper = styled.div`
     display: block !important;
     margin: 2rem auto !important;
     border-radius: 16px !important;
-    border: 1px solid ${({ theme }) => theme.colors.border} !important;
   }
 
   h1 {
@@ -136,7 +135,7 @@ const DocWrapper = styled.div`
     display: block;
     margin: 2rem auto;
     border-radius: ${({ theme }) => theme.borderRadius.md};
-    border: 1px solid ${({ theme }) => theme.colors.border};
+    
   }
 
   table {
