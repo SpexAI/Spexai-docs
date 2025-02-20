@@ -93,7 +93,7 @@ const Sidebar = styled.aside`
   position: fixed;
   left: 0;
   top: 0;
-  z-index: 1002;
+  z-index: 1;
   transition: transform 0.3s ease;
 
   @media (max-width: 768px) {
@@ -102,6 +102,7 @@ const Sidebar = styled.aside`
     width: 85%;
     max-width: 300px;
     height: calc(100vh - 60px);
+    z-index: 5;
   }
 `;
 

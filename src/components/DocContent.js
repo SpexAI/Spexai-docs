@@ -135,7 +135,6 @@ const DocWrapper = styled.div`
     display: block;
     margin: 2rem auto;
     border-radius: ${({ theme }) => theme.borderRadius.md};
-    
   }
 
   table {
@@ -212,12 +211,39 @@ const DocWrapper = styled.div`
   }
 `;
 
+const ModalContainer = styled.div`
+  position: relative;
+  z-index: 99999999;
+`;
+
+const ImageModal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1003;
+  cursor: pointer;
+
+  img {
+    max-width: 90%;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 16px;
+  }
+`;
+
 const DocContent = () => {
   const { docId } = useParams();
   const location = useLocation();
   const { user } = useAuth();
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   // Get the base URL
   const baseUrl = window.location.origin;
@@ -330,31 +356,26 @@ const DocContent = () => {
   // Custom renderer for markdown elements
   const components = {
     img: ({ node, ...props }) => {
-      // Check both URL and alt text for video extensions
       const isVideo =
         props.src?.match(/\.(mp4|webm|ogg|mov)/i) ||
         props.alt?.match(/\.(mp4|webm|ogg|mov)$/i);
 
       if (isVideo) {
-        console.log("Rendering video:", props.src); // Debug log
         return (
-          <video
-            controls
-            style={{
-              maxWidth: "100%",
-              borderRadius: "8px",
-              margin: "1.5rem 0",
-            }}
-            playsInline
-          >
+          <video controls style={{ maxWidth: "100%" }} playsInline>
             <source src={props.src} />
             Your browser does not support the video tag.
           </video>
         );
       }
 
-      // Regular image rendering
-      return <img {...props} style={{ maxWidth: "100%" }} />;
+      return (
+        <img
+          {...props}
+          style={{ maxWidth: "100%", cursor: "pointer" }}
+          onClick={() => setSelectedImage(props.src)}
+        />
+      );
     },
   };
 
@@ -372,7 +393,27 @@ const DocContent = () => {
   if (!document) return null;
 
   return (
-    <>
+    <ModalContainer>
+      <DocWrapper>
+        <h1>{document.title}</h1>
+        {formattedDate && <div>Last updated: {formattedDate}</div>}
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+          components={components}
+        >
+          {document.content}
+        </ReactMarkdown>
+      </DocWrapper>
+      {selectedImage && (
+        <ImageModal onClick={() => setSelectedImage(null)}>
+          <img
+            src={selectedImage}
+            alt="Enlarged view"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </ImageModal>
+      )}
       {document && (
         <Helmet prioritizeSeoTags={true}>
           <title>
@@ -436,18 +477,7 @@ const DocContent = () => {
           />
         </Helmet>
       )}
-      <DocWrapper>
-        <h1>{document.title}</h1>
-        {formattedDate && <div>Last updated: {formattedDate}</div>}
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw]}
-          components={components}
-        >
-          {document.content}
-        </ReactMarkdown>
-      </DocWrapper>
-    </>
+    </ModalContainer>
   );
 };
 
