@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import mermaid from "mermaid";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import styled from "styled-components";
 import { useParams, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -18,6 +18,10 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { Helmet } from "react-helmet-async";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
+import remarkDirective from "remark-directive";
 
 mermaid.initialize({
   startOnLoad: true,
@@ -50,6 +54,10 @@ const DocWrapper = styled.div`
   position: relative;
   color: ${({ theme }) => theme.colors.text};
   z-index: 1;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 
   p img,
   p video {
@@ -131,10 +139,16 @@ const DocWrapper = styled.div`
   }
 
   img {
-    max-width: calc(100% - 100px);
-    display: block;
-    margin: 2rem auto;
+    max-width: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 1.5rem 0 !important;
     border-radius: ${({ theme }) => theme.borderRadius.md};
+
+    @media (max-width: 768px) {
+      margin: 1rem 0 !important;
+      border-radius: ${({ theme }) => theme.borderRadius.sm};
+    }
   }
 
   table {
@@ -142,10 +156,18 @@ const DocWrapper = styled.div`
     margin: 1.5rem 0;
     border-collapse: collapse;
 
+    @media (max-width: 768px) {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      font-size: 14px;
+    }
+
     th,
     td {
       padding: 0.75rem;
       border: 1px solid ${({ theme }) => theme.colors.border};
+      min-width: 120px;
     }
 
     th {
@@ -165,23 +187,22 @@ const DocWrapper = styled.div`
   }
 
   .mermaid {
-    background: linear-gradient(
-      97.38deg,
-      #fe3f68 -5.06%,
-      #9b4bcc 30.57%,
-      #4a6eec 74.68%,
-      #2fdda2 105.9%
-    );
-    padding: 2rem;
-    border-radius: ${({ theme }) => theme.borderRadius.md};
-    border: 1px solid ${({ theme }) => theme.colors.border};
     margin: 1.5rem 0;
-    width: 100%;
+    padding: 1.5rem;
+    border-radius: ${({ theme }) => theme.borderRadius.md};
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    @media (max-width: 768px) {
+      margin: 1rem -1rem;
+      padding: 1rem;
+      border-radius: 0;
+      font-size: 14px;
+    }
 
     svg {
-      width: 100% !important;
-      height: 100% !important;
+      max-width: 100%;
+      height: auto !important;
     }
   }
 
@@ -195,18 +216,40 @@ const DocWrapper = styled.div`
   }
 
   pre {
-    background: ${({ theme }) => theme.colors.codeBg};
-    padding: 1rem;
+    margin: 1.5rem 0;
+    padding: 1.5rem;
     border-radius: ${({ theme }) => theme.borderRadius.md};
     overflow-x: auto;
-    border: 1px solid ${({ theme }) => theme.colors.codeBorder};
-    margin: 1rem 0;
+    -webkit-overflow-scrolling: touch;
+
+    @media (max-width: 768px) {
+      margin: 1rem -1rem;
+      padding: 1rem;
+      border-radius: 0;
+      font-size: 14px;
+    }
 
     code {
-      background: none;
-      padding: 0;
-      border: none;
-      font-size: ${({ theme }) => theme.fontSizes.sm};
+      font-size: inherit;
+    }
+  }
+
+  // LaTeX styles
+  .katex {
+    font-size: 1.1em;
+
+    @media (max-width: 768px) {
+      font-size: 1em;
+    }
+  }
+
+  .katex-display {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 1rem 0;
+
+    @media (max-width: 768px) {
+      padding: 0.5rem 0;
     }
   }
 `;
@@ -393,16 +436,24 @@ const DocContent = () => {
   if (!document) return null;
 
   return (
-    <ModalContainer>
+    <>
       <DocWrapper>
         <h1>{document.title}</h1>
         {formattedDate && <div>Last updated: {formattedDate}</div>}
         <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw]}
+          remarkPlugins={[remarkGfm, remarkMath, remarkDirective]}
+          rehypePlugins={[
+            [
+              rehypeKatex,
+              {
+                throwOnError: false,
+                trust: true,
+              },
+            ],
+          ]}
           components={components}
         >
-          {document.content}
+          {document?.content || ""}
         </ReactMarkdown>
       </DocWrapper>
       {selectedImage && (
@@ -477,7 +528,7 @@ const DocContent = () => {
           />
         </Helmet>
       )}
-    </ModalContainer>
+    </>
   );
 };
 
