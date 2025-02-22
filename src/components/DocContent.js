@@ -22,7 +22,9 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import remarkDirective from "remark-directive";
+import DOMPurify from "dompurify";
 
+// Initialize mermaid globally once
 mermaid.initialize({
   startOnLoad: true,
   theme: "default",
@@ -187,22 +189,26 @@ const DocWrapper = styled.div`
   }
 
   .mermaid {
-    margin: 1.5rem 0;
-    padding: 1.5rem;
+    background: linear-gradient(
+      97.38deg,
+      #fe3f68 -5.06%,
+      #9b4bcc 30.57%,
+      #4a6eec 74.68%,
+      #2fdda2 105.9%
+    );
+    padding: 2rem;
     border-radius: ${({ theme }) => theme.borderRadius.md};
+    border: 1px solid ${({ theme }) => theme.colors.border};
+    margin: 1.5rem 0;
+    width: 100%;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-
-    @media (max-width: 768px) {
-      margin: 1rem -1rem;
-      padding: 1rem;
-      border-radius: 0;
-      font-size: 14px;
-    }
 
     svg {
-      max-width: 100%;
-      height: auto !important;
+      width: 100% !important;
+      height: 100% !important;
+      background: white;
+      border-radius: ${({ theme }) => theme.borderRadius.sm};
+      padding: 1rem;
     }
   }
 
@@ -280,6 +286,30 @@ const ImageModal = styled.div`
   }
 `;
 
+// Create a proper Mermaid component
+const MermaidDiagram = ({ chart }) => {
+  const elementRef = useRef(null);
+
+  useEffect(() => {
+    if (elementRef.current && chart) {
+      const renderChart = async () => {
+        elementRef.current.innerHTML = "";
+        const sanitizedChart = DOMPurify.sanitize(chart);
+        try {
+          const { svg } = await mermaid.render("mermaid-svg", sanitizedChart);
+          elementRef.current.innerHTML = svg;
+        } catch (error) {
+          console.error("Mermaid rendering error:", error);
+          elementRef.current.innerHTML = "Failed to render diagram";
+        }
+      };
+      renderChart();
+    }
+  }, [chart]);
+
+  return <div className="mermaid" ref={elementRef} />;
+};
+
 const DocContent = () => {
   const { docId } = useParams();
   const location = useLocation();
@@ -291,15 +321,6 @@ const DocContent = () => {
   // Get the base URL
   const baseUrl = window.location.origin;
   const currentUrl = `${baseUrl}${location.pathname}`;
-
-  // Memoize mermaid initialization
-  useEffect(() => {
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: "default",
-      securityLevel: "loose",
-    });
-  }, []);
 
   useEffect(() => {
     const fetchDoc = async () => {
@@ -420,6 +441,23 @@ const DocContent = () => {
         />
       );
     },
+    div: ({ node, className, children, ...props }) => {
+      if (className === "mermaid") {
+        const content = Array.isArray(children)
+          ? children.join("")
+          : String(children || "");
+        return (
+          <div className="mermaid" {...props}>
+            {content}
+          </div>
+        );
+      }
+      return (
+        <div className={className} {...props}>
+          {children}
+        </div>
+      );
+    },
   };
 
   if (loading) {
@@ -436,13 +474,14 @@ const DocContent = () => {
   if (!document) return null;
 
   return (
-    <>
+    <ModalContainer>
       <DocWrapper>
         <h1>{document.title}</h1>
         {formattedDate && <div>Last updated: {formattedDate}</div>}
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkMath, remarkDirective]}
           rehypePlugins={[
+            rehypeRaw,
             [
               rehypeKatex,
               {
@@ -528,7 +567,7 @@ const DocContent = () => {
           />
         </Helmet>
       )}
-    </>
+    </ModalContainer>
   );
 };
 
